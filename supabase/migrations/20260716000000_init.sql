@@ -25,9 +25,10 @@ END;
 $$ LANGUAGE plpgsql VOLATILE;
 
 -- 3. Reference to auth.users is handled natively by Supabase, no need to mock auth schema here.
+
 -- 4. Create Tables
 -- 4.1 Profiles Table
-CREATE TABLE public.profiles (
+CREATE TABLE IF NOT EXISTS public.profiles (
     id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     nickname VARCHAR(50) NOT NULL UNIQUE,
     avatar_url TEXT,
@@ -38,13 +39,14 @@ CREATE TABLE public.profiles (
 );
 
 -- 4.2 Jobs (Occupation Hierarchy) Table
-CREATE TABLE public.jobs (
+CREATE TABLE IF NOT EXISTS public.jobs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v7(),
     parent_job_id UUID REFERENCES public.jobs(id) ON DELETE SET NULL,
     title VARCHAR(100) NOT NULL UNIQUE,
     industry VARCHAR(100) NOT NULL,
     description TEXT,
     icon VARCHAR(100),
+    search_tags TEXT, -- 동의어/키워드 검색용 컬럼 (ex. 'backend, 백엔드, 백앤드, 서버')
     display_order INTEGER NOT NULL DEFAULT 0,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -52,7 +54,7 @@ CREATE TABLE public.jobs (
 );
 
 -- 4.3 Profile Target Jobs Table
-CREATE TABLE public.profile_target_jobs (
+CREATE TABLE IF NOT EXISTS public.profile_target_jobs (
     profile_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     job_id UUID NOT NULL REFERENCES public.jobs(id) ON DELETE CASCADE,
     priority INTEGER NOT NULL DEFAULT 1,
@@ -62,7 +64,7 @@ CREATE TABLE public.profile_target_jobs (
 );
 
 -- 4.4 Standard Events Table
-CREATE TABLE public.standard_events (
+CREATE TABLE IF NOT EXISTS public.standard_events (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v7(),
     category VARCHAR(50) NOT NULL,
     standard_title VARCHAR(200) NOT NULL UNIQUE,
@@ -72,7 +74,7 @@ CREATE TABLE public.standard_events (
 );
 
 -- 4.5 Events Table
-CREATE TABLE public.events (
+CREATE TABLE IF NOT EXISTS public.events (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v7(),
     profile_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     standard_event_id UUID REFERENCES public.standard_events(id) ON DELETE SET NULL,
@@ -91,7 +93,7 @@ CREATE TABLE public.events (
 );
 
 -- 4.6 Event Sequences Table
-CREATE TABLE public.event_sequences (
+CREATE TABLE IF NOT EXISTS public.event_sequences (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v7(),
     profile_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     previous_event_id UUID REFERENCES public.events(id) ON DELETE SET NULL,
@@ -102,7 +104,7 @@ CREATE TABLE public.event_sequences (
 );
 
 -- 4.7 Event Edges (Statistics) Table
-CREATE TABLE public.event_edges (
+CREATE TABLE IF NOT EXISTS public.event_edges (
     from_standard_event_id UUID NOT NULL REFERENCES public.standard_events(id) ON DELETE CASCADE,
     to_standard_event_id UUID NOT NULL REFERENCES public.standard_events(id) ON DELETE CASCADE,
     edge_type VARCHAR(30) NOT NULL DEFAULT 'default',
@@ -114,7 +116,7 @@ CREATE TABLE public.event_edges (
 );
 
 -- 4.8 Skills Table
-CREATE TABLE public.skills (
+CREATE TABLE IF NOT EXISTS public.skills (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v7(),
     name VARCHAR(100) NOT NULL UNIQUE,
     category VARCHAR(50) NOT NULL,
@@ -124,14 +126,14 @@ CREATE TABLE public.skills (
 );
 
 -- 4.9 Event Skills Junction Table
-CREATE TABLE public.event_skills (
+CREATE TABLE IF NOT EXISTS public.event_skills (
     event_id UUID NOT NULL REFERENCES public.events(id) ON DELETE CASCADE,
     skill_id UUID NOT NULL REFERENCES public.skills(id) ON DELETE CASCADE,
     PRIMARY KEY (event_id, skill_id)
 );
 
 -- 4.10 Event Attachments Table
-CREATE TABLE public.event_attachments (
+CREATE TABLE IF NOT EXISTS public.event_attachments (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v7(),
     event_id UUID NOT NULL REFERENCES public.events(id) ON DELETE CASCADE,
     storage_path TEXT NOT NULL,
@@ -143,7 +145,7 @@ CREATE TABLE public.event_attachments (
 );
 
 -- 4.11 Roadmap Nodes Table
-CREATE TABLE public.roadmap_nodes (
+CREATE TABLE IF NOT EXISTS public.roadmap_nodes (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v7(),
     job_id UUID NOT NULL REFERENCES public.jobs(id) ON DELETE CASCADE,
     standard_event_id UUID REFERENCES public.standard_events(id) ON DELETE SET NULL,
@@ -155,7 +157,7 @@ CREATE TABLE public.roadmap_nodes (
 );
 
 -- 4.12 Roadmap Edges Table
-CREATE TABLE public.roadmap_edges (
+CREATE TABLE IF NOT EXISTS public.roadmap_edges (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v7(),
     from_node_id UUID NOT NULL REFERENCES public.roadmap_nodes(id) ON DELETE CASCADE,
     to_node_id UUID NOT NULL REFERENCES public.roadmap_nodes(id) ON DELETE CASCADE,
@@ -167,7 +169,7 @@ CREATE TABLE public.roadmap_edges (
 );
 
 -- 4.13 Roadmap Cache Table
-CREATE TABLE public.roadmap_cache (
+CREATE TABLE IF NOT EXISTS public.roadmap_cache (
     job_id UUID PRIMARY KEY REFERENCES public.jobs(id) ON DELETE CASCADE,
     tree_data JSONB NOT NULL,
     version INTEGER NOT NULL DEFAULT 1,
@@ -175,7 +177,7 @@ CREATE TABLE public.roadmap_cache (
 );
 
 -- 4.14 Notion Connections Table
-CREATE TABLE public.notion_connections (
+CREATE TABLE IF NOT EXISTS public.notion_connections (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v7(),
     profile_id UUID NOT NULL UNIQUE REFERENCES public.profiles(id) ON DELETE CASCADE,
     encrypted_access_token TEXT NOT NULL,
@@ -186,7 +188,7 @@ CREATE TABLE public.notion_connections (
 );
 
 -- 4.15 Notion Databases Table
-CREATE TABLE public.notion_databases (
+CREATE TABLE IF NOT EXISTS public.notion_databases (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v7(),
     connection_id UUID NOT NULL REFERENCES public.notion_connections(id) ON DELETE CASCADE,
     notion_database_id VARCHAR(100) NOT NULL,
@@ -197,7 +199,7 @@ CREATE TABLE public.notion_databases (
 );
 
 -- 4.16 Notion Sync Logs Table
-CREATE TABLE public.notion_sync_logs (
+CREATE TABLE IF NOT EXISTS public.notion_sync_logs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v7(),
     database_id UUID NOT NULL REFERENCES public.notion_databases(id) ON DELETE CASCADE,
     import_source_type VARCHAR(20) NOT NULL DEFAULT 'notion_db',
@@ -208,7 +210,7 @@ CREATE TABLE public.notion_sync_logs (
 );
 
 -- 4.17 Community Tables (Comments, Likes, Bookmarks, Follows, Notifications, Reports)
-CREATE TABLE public.comments (
+CREATE TABLE IF NOT EXISTS public.comments (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v7(),
     profile_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     target_event_id UUID REFERENCES public.events(id) ON DELETE CASCADE,
@@ -219,7 +221,7 @@ CREATE TABLE public.comments (
     deleted_at TIMESTAMPTZ
 );
 
-CREATE TABLE public.likes (
+CREATE TABLE IF NOT EXISTS public.likes (
     profile_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     target_type VARCHAR(30) NOT NULL,
     target_id UUID NOT NULL,
@@ -227,21 +229,21 @@ CREATE TABLE public.likes (
     PRIMARY KEY (profile_id, target_type, target_id)
 );
 
-CREATE TABLE public.bookmarks (
+CREATE TABLE IF NOT EXISTS public.bookmarks (
     profile_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     target_event_id UUID REFERENCES public.events(id) ON DELETE CASCADE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     PRIMARY KEY (profile_id, target_event_id)
 );
 
-CREATE TABLE public.follows (
+CREATE TABLE IF NOT EXISTS public.follows (
     follower_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     following_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     PRIMARY KEY (follower_id, following_id)
 );
 
-CREATE TABLE public.notifications (
+CREATE TABLE IF NOT EXISTS public.notifications (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v7(),
     receiver_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     sender_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
@@ -252,7 +254,7 @@ CREATE TABLE public.notifications (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE public.reports (
+CREATE TABLE IF NOT EXISTS public.reports (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v7(),
     reporter_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     target_type VARCHAR(30) NOT NULL,
@@ -265,19 +267,19 @@ CREATE TABLE public.reports (
 
 -- 5. Indexes for Performance & Search
 -- 5.1 GIN Trigram Indexes for Fuzzy Search
-CREATE INDEX idx_skills_name_trgm ON public.skills USING gin (name gin_trgm_ops);
-CREATE INDEX idx_jobs_title_trgm ON public.jobs USING gin (title gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_skills_name_trgm ON public.skills USING gin (name gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_jobs_title_trgm ON public.jobs USING gin (title gin_trgm_ops);
 
 -- 5.2 Full Text Search Index for Events
-CREATE INDEX idx_events_fts ON public.events USING gin (to_tsvector('simple', title || ' ' || coalesce(description, '')));
+CREATE INDEX IF NOT EXISTS idx_events_fts ON public.events USING gin (to_tsvector('simple', title || ' ' || coalesce(description, '')));
 
 -- 5.3 JSONB Path Ops GIN Index for Event Attributes
-CREATE INDEX idx_events_attributes_path ON public.events USING gin (attributes jsonb_path_ops);
+CREATE INDEX IF NOT EXISTS idx_events_attributes_path ON public.events USING gin (attributes jsonb_path_ops);
 
 -- 5.4 Covering & Composite Indexes
-CREATE INDEX idx_events_profile_category ON public.events (profile_id, category) WHERE deleted_at IS NULL;
-CREATE INDEX idx_roadmap_nodes_job_event ON public.roadmap_nodes (job_id, standard_event_id);
-CREATE INDEX idx_roadmap_edges_from ON public.roadmap_edges (from_node_id);
-CREATE INDEX idx_roadmap_edges_to ON public.roadmap_edges (to_node_id);
-CREATE INDEX idx_profile_target_jobs_priority ON public.profile_target_jobs (profile_id, priority);
-CREATE INDEX idx_event_sequences_chain ON public.event_sequences (profile_id, previous_event_id, next_event_id);
+CREATE INDEX IF NOT EXISTS idx_events_profile_category ON public.events (profile_id, category) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_roadmap_nodes_job_event ON public.roadmap_nodes (job_id, standard_event_id);
+CREATE INDEX IF NOT EXISTS idx_roadmap_edges_from ON public.roadmap_edges (from_node_id);
+CREATE INDEX IF NOT EXISTS idx_roadmap_edges_to ON public.roadmap_edges (to_node_id);
+CREATE INDEX IF NOT EXISTS idx_profile_target_jobs_priority ON public.profile_target_jobs (profile_id, priority);
+CREATE INDEX IF NOT EXISTS idx_event_sequences_chain ON public.event_sequences (profile_id, previous_event_id, next_event_id);

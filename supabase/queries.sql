@@ -9,10 +9,10 @@ VALUES ('a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d', 'testuser@example.com')
 ON CONFLICT (id) DO NOTHING;
 
 -- 0.2 jobs에 테스트 직무 삽입
-INSERT INTO public.jobs (id, title, industry, description, display_order)
+INSERT INTO public.jobs (id, title, industry, description, search_tags, display_order)
 VALUES 
-    ('018f4b50-1234-7000-8000-000000000001', '백엔드 개발자', 'IT', '백엔드 시스템 아키텍처 및 API 개발', 1),
-    ('018f4b50-1234-7000-8000-000000000002', 'DevOps 엔지니어', 'IT', '클라우드 인프라 및 CI/CD 구축', 2)
+    ('018f4b50-1234-7000-8000-000000000001', '백엔드 개발자', 'IT', '백엔드 시스템 아키텍처 및 API 개발', 'backend, 백엔드, 백앤드, 서버개발자, server', 1),
+    ('018f4b50-1234-7000-8000-000000000002', 'DevOps 엔지니어', 'IT', '클라우드 인프라 및 CI/CD 구축', 'devops, 데브옵스, 디옵스, 인프라, infra', 2)
 ON CONFLICT (id) DO NOTHING;
 
 -- 0.3 standard_events에 테스트 표준 이벤트 삽입

@@ -9,12 +9,14 @@ import CareerNode from './CareerNode';
 import CareerEdge from './CareerEdge';
 import { useUIStateStore } from '@/store/uiStateStore';
 
+import OrganicRootLayer from './OrganicRootLayer';
+
 const nodeTypes = {
   careerNode: CareerNode,
 };
 
 const edgeTypes = {
-  careerEdge: CareerEdge,
+  careerEdge: () => null, // 기본 Edge 렌더링을 완전히 비활성화 (OrganicRootLayer가 대신 그림)
 };
 
 // Dagre Layout을 이용해 수직 방향 계층형 트리 정렬 진행
@@ -24,7 +26,12 @@ const getLayoutedElements = (nodes: any[], edges: any[]) => {
   g.setDefaultEdgeLabel(() => ({}));
 
   nodes.forEach((node) => {
-    g.setNode(node.id, { width: 220, height: 80 });
+    // 일반 도트 노드(careerNode)는 크기가 매우 작으므로, Root와 분리하거나 컴팩트한 값으로 배치
+    const isRoot = node.data?.isRoot;
+    g.setNode(node.id, { 
+      width: isRoot ? 240 : 40, 
+      height: isRoot ? 80 : 40 
+    });
   });
 
   edges.forEach((edge) => {
@@ -36,11 +43,12 @@ const getLayoutedElements = (nodes: any[], edges: any[]) => {
   return {
     nodes: nodes.map((node) => {
       const nodeWithPosition = g.node(node.id);
+      const isRoot = node.data?.isRoot;
       return {
         ...node,
         position: {
-          x: nodeWithPosition.x - 110,
-          y: nodeWithPosition.y - 40,
+          x: isRoot ? nodeWithPosition.x - 120 : nodeWithPosition.x - 10,
+          y: isRoot ? nodeWithPosition.y - 40 : nodeWithPosition.y - 10,
         },
       };
     }),
@@ -58,7 +66,7 @@ interface RoadmapCanvasProps {
 }
 
 export default function RoadmapCanvas({ treeData, myEvents = [], mySequences = [] }: RoadmapCanvasProps) {
-  const { showMyCareerOverlay, hoveredEdge } = useUIStateStore();
+  const { showMyCareerOverlay, hoveredEdge, hoveredNode, setSelectedEdge, setIsDrawerOpen } = useUIStateStore();
 
   const processedData = useMemo(() => {
     // 1. 내 커리어 정보를 Overlay(주황색)할지 여부에 따라 상태 추가 설정
@@ -106,10 +114,17 @@ export default function RoadmapCanvas({ treeData, myEvents = [], mySequences = [
   const [nodes, setNodes, onNodesChange] = useNodesState<any>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<any>([]);
 
+
   useEffect(() => {
     setNodes(processedData.nodes);
     setEdges(processedData.edges);
   }, [processedData, setNodes, setEdges]);
+
+  // 노드 호버 시 옆에 띄워줄 목업 사용자 매핑 데이터
+  const hoverProfiles = [
+    { name: '김서연', bio: '5년차 백엔드 시니어', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80' },
+    { name: '박도현', bio: 'Java & Spring 엔지니어', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80' }
+  ];
 
   return (
     <div className="w-full h-full relative">
@@ -121,13 +136,18 @@ export default function RoadmapCanvas({ treeData, myEvents = [], mySequences = [
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         fitView
+        nodesDraggable={false}
         minZoom={0.2}
         maxZoom={1.5}
         proOptions={{ hideAttribution: true }}
+        className="organic-flow"
       >
+        <OrganicRootLayer />
         <Background color="#ebdcc8" gap={20} size={1} />
         <Controls className="!bg-[#fcfaf7] !border-[#e8dfd5] !rounded-xl !shadow-md" />
       </ReactFlow>
+
+
 
       {/* 실시간 플로팅 Edge Hover 정보 패널 */}
       {hoveredEdge && (

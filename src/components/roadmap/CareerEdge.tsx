@@ -18,12 +18,13 @@ export default function CareerEdge({
   markerEnd,
   data,
 }: EdgeProps) {
+  // 각 에지가 노드에서 수직으로 만나도록 베지어 곡선을 사용하여, 전체 경로가 끊김 없이 하나의 부드러운 줄기로 보이게 함
   const [edgePath, labelX, labelY] = getBezierPath({
     sourceX,
     sourceY,
+    sourcePosition,
     targetX,
     targetY,
-    sourcePosition,
     targetPosition,
   });
 
@@ -39,28 +40,18 @@ export default function CareerEdge({
   const isHovered = hoveredEdge?.id === id;
   const strokeWidth = isHovered ? baseWidth + 3 : baseWidth;
 
-  // 점진적 컬러링: 나의 경로는 주황, 타인 경로는 가중치(사람 수)에 따라 연두색 ~ 초록색
-  let edgeColor = '#BFBFBF'; // 기본 회색
+  // 점진적 컬러링 대신 전체가 하나의 줄기처럼 보이도록 단일 색상(연두색)으로 통일
+  let edgeColor = '#5DDC72'; // 기본 연두색
   if (isMyPath) {
     edgeColor = '#F28C28';
-  } else if (count > 800) {
-    edgeColor = '#3da34f'; // 진한 초록
-  } else if (count > 300) {
-    edgeColor = '#5DDC72'; // 연두색
-  } else if (count > 100) {
-    edgeColor = '#a8e6b2'; // 밝은 연두
   }
 
   // 호버 시 색상을 원래보다 진하게 보정
   if (isHovered) {
     if (isMyPath) {
       edgeColor = '#c46b12'; // 어두운 주황
-    } else if (count > 800) {
-      edgeColor = '#246b31';
-    } else if (count > 300) {
-      edgeColor = '#3da34f';
     } else {
-      edgeColor = '#7cb886';
+      edgeColor = '#3da34f'; // 진한 초록
     }
   }
 

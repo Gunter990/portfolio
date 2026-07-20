@@ -12,3 +12,36 @@ body {
   margin: 0;
   padding: 0;
 }
+
+/* React Flow 레이어 순서 제어 (노드가 완전히 선 위에 올라오고 선이 그 뒤를 관통하게 구성) */
+.organic-flow .react-flow__renderer {
+  z-index: 1 !important;
+}
+
+/* SVG 에지 레이어를 완벽히 뒤쪽으로 격리 */
+.organic-flow .react-flow__edges {
+  z-index: 5 !important;
+}
+
+.organic-flow .react-flow__edgessvg {
+  z-index: 5 !important;
+  overflow: visible !important;
+}
+
+/* 개별 노드 요소들을 에지보다 높은 z-index로 강제 렌더링 */
+.organic-flow .react-flow__nodes-wrapper {
+  z-index: 20 !important;
+}
+
+.organic-flow .react-flow__nodes {
+  z-index: 20 !important;
+  pointer-events: none !important;
+}
+
+.organic-flow .react-flow__node {
+  z-index: 20 !important;
+  pointer-events: all !important;
+}
+
+
+

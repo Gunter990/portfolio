@@ -38,8 +38,8 @@ export default function JobSearchBar({ starredIds, toggleStar }: JobSearchBarPro
       try {
         const { data, error } = await supabase
           .from('jobs')
-          .select('id, title, industry, description, display_order, parent_job_id, icon')
-          .ilike('title', `%${query}%`)
+          .select('id, title, industry, description, display_order, parent_job_id, icon, search_tags')
+          .or(`title.ilike.%${query}%,search_tags.ilike.%${query}%`)
           .limit(10);
 
         if (!error && data) {
