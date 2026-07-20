@@ -13,7 +13,28 @@ export default function CareerPathDrawer() {
   const currentJobId = selectedJobId || '018f4b50-1234-7000-8000-000000000001';
   let mockUsers = mockUsersByJob[currentJobId] || mockUsersByJob['018f4b50-1234-7000-8000-000000000001'];
 
-  if (currentJobId === '018f4b50-1234-7000-8000-000000000001' && selectedEdge) {
+  // 튜토리얼 상태일 때는 가짜 사용자 목록만 제공
+  if (!selectedJobId) {
+    const tutorialUser = {
+      profileId: 'tutorial-user-1',
+      nickname: '튜토리얼 프로필',
+      avatarUrl: "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23d1d5db'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E",
+      bio: '가상의 튜토리얼용 프로필입니다. 실제 포트폴리오의 구조와 기능을 직접 체험해보세요!',
+      portfolio: {
+        skills: ['React', 'Next.js', 'TailwindCSS'],
+        experiences: [
+          { company: '경험1', role: '주니어 프론트엔드 개발자', startDate: '2025-01', endDate: '2025-06', achievements: ['기본 웹 마크업 및 React 핵심 상태 관리 구현', '컴포넌트 리팩토링 주도'] },
+          { company: '심화 과정', role: '고급 프론트엔드 트레이닝', startDate: '2025-07', endDate: null, achievements: ['Next.js 15 App Router 심화 아키텍처 학습', '렌더링 최적화 및 SEO 고도화 진행'] }
+        ],
+        certificates: [
+          { name: '튜토리얼 이수증', date: '2025-06-30' }
+        ],
+        githubUrl: 'https://github.com/tutorial-user'
+      }
+    } as any;
+    
+    mockUsers = [tutorialUser];
+  } else if (currentJobId === '018f4b50-1234-7000-8000-000000000001' && selectedEdge) {
     const sId = selectedEdge.sourceId;
     const tId = selectedEdge.targetId;
 
@@ -38,18 +59,15 @@ export default function CareerPathDrawer() {
     }
 
     if (isRouteA) {
-      // CS 전공 / Java 스프링 루트 (Route A)
       mockUsers = mockUsers.filter(u => u.profileId.endsWith('-be') || u.profileId.endsWith('-be-a'));
     } else if (isRouteB) {
-      // 비전공 / 부트캠프 루트 (Route B)
       mockUsers = mockUsers.filter(u => u.profileId.endsWith('-be-b'));
     } else if (isRouteC) {
-      // Node.js / JavaScript 루트 (Route C)
       mockUsers = mockUsers.filter(u => u.profileId.endsWith('-be-c'));
     }
   }
 
-  const activeUser = selectedProfileId 
+  let activeUser = selectedProfileId 
     ? mockUsers.find(u => u.profileId === selectedProfileId) || null
     : null;
 
@@ -72,7 +90,11 @@ export default function CareerPathDrawer() {
           <div className="flex items-center justify-between px-6 py-5 border-b border-[#f2ebe1]">
             <div>
               <Drawer.Title className="text-base font-bold text-[#4a3e3d] line-clamp-1">
-                {selectedEdge ? `${selectedEdge.sourceLabel} → ${selectedEdge.targetLabel}` : '선택한 커리어 패스 이력'}
+                {selectedEdge 
+                  ? (selectedEdge.sourceLabel === selectedEdge.targetLabel 
+                      ? selectedEdge.sourceLabel 
+                      : `${selectedEdge.sourceLabel} → ${selectedEdge.targetLabel}`) 
+                  : '선택한 커리어 패스 이력'}
               </Drawer.Title>
               <Drawer.Description className="text-xs text-[#8c7b6e] mt-1">
                 이 경로를 밟아간 선배들의 포트폴리오를 탐색하세요.

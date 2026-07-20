@@ -68,8 +68,8 @@ export default function CareerNode({ id, data }: CareerNodeProps) {
       ref={elRef}
       onClick={() => {
         setSelectedEdge({
-          sourceId: data.label,
-          targetId: data.label,
+          sourceId: id,
+          targetId: id,
           sourceLabel: data.label,
           targetLabel: data.label,
         });
@@ -154,9 +154,41 @@ export default function CareerNode({ id, data }: CareerNodeProps) {
           </div>
 
           {data.category === 'tutorial' ? (
-            <div className="flex items-center justify-center py-3 px-1">
-              <span className="text-[10px] font-bold text-[#8c7b6e]">프로필이 나오는 곳</span>
-            </div>
+            <>
+              <div className="text-[10px] font-bold text-[#8c7b6e] mb-1">
+                프로필
+              </div>
+              <div className="flex flex-col gap-2">
+                {[
+                  { profileId: 'tutorial-user-1', nickname: '가짜 프로필', avatarUrl: "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23d1d5db'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E" }
+                ].map((user) => (
+                  <div
+                    key={user.profileId}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedEdge({
+                        sourceId: id,
+                        targetId: id,
+                        sourceLabel: data.label,
+                        targetLabel: data.label,
+                      });
+                      useUIStateStore.getState().setSelectedProfileId(user.profileId);
+                      setIsDrawerOpen(true);
+                      useUIStateStore.getState().setHoveredNode(null);
+                    }}
+                    className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-[#5ddc72]/10 hover:border-[#5ddc72]/30 border border-transparent cursor-pointer transition-colors"
+                  >
+                    <img src={user.avatarUrl} alt={user.nickname} className="w-6 h-6 rounded-full object-cover border border-[#e8dfd5]" />
+                    <div>
+                      <div className="text-[11px] font-bold text-[#4a3e3d]">{user.nickname}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="text-[9px] text-[#b0a295] text-center mt-1">
+                * 클릭 시 가상 포트폴리오 열림
+              </div>
+            </>
           ) : (
             <>
               <div className="text-[10px] font-bold text-[#8c7b6e] mb-1">
@@ -169,8 +201,8 @@ export default function CareerNode({ id, data }: CareerNodeProps) {
                     onClick={(e) => {
                       e.stopPropagation();
                       setSelectedEdge({
-                        sourceId: data.label,
-                        targetId: data.label,
+                        sourceId: id,
+                        targetId: id,
                         sourceLabel: data.label,
                         targetLabel: data.label,
                       });
